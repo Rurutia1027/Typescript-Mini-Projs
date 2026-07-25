@@ -13,7 +13,7 @@ import { createAdminRouter } from './admin/routes.js';
 import { requireGatewayKey, type AuthVariables } from './auth/middleware.js';   
 import { loadEnv } from './config/env.js'; 
 import {rateLimit, type LimitVariables } from './limit/middleware.js'; 
-import { IRChatRequestSchema } from './types/ir.js'; 
+import { IRChatRequestSchema, type IRChatRequest } from './types/ir.js'; 
 
 const env = loadEnv();  
 

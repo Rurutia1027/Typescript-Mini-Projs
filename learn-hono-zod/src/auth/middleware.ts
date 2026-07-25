@@ -17,7 +17,7 @@ export type AuthVariables = {auth: AuthContext};
 /** In-memory key table for the mini project (book uses Drizzle + SQLite).  */
 const KEY_DB: Record<string, AuthContext> = {
     'sk-gw-alice': {keyId: 'key-1', userId: 'user-1', scopes: ['chat']}, 
-    'sk-gw-bob': {keyId: 'key-2', userId: 'user-2', scopes['chat', 'admin']}, 
+    'sk-gw-bob': {keyId: 'key-2', userId: 'user-2', scopes: ['chat', 'admin']}, 
 }; 
 
 export function extractBearerToken(header: string | undefined): string | null {
@@ -45,7 +45,7 @@ export const requireGatewayKey: MiddlewareHandler<{
 
     const row = KEY_DB[plaintext]; 
     if (!row) {
-        return .json({error: {message: 'invalid key'}}, 401); 
+        return c.json({error: {message: 'invalid key'}}, 401); 
     }
 
     c.set('auth', row); 
@@ -55,6 +55,9 @@ export const requireGatewayKey: MiddlewareHandler<{
 export function requireAdminToken(expected: string): MiddlewareHandler {
     return async(c, next) => {
         const token = c.req.header('X-Admin-Token'); 
+        if (!token) {
+            return c.json({error: {message: 'invalid admin token'}}, 401); 
+        }
         // Constant-time-ish compare for teaching (book does the same idea).
         const a = Buffer.from(token); 
         const b = Buffer.from(expected); 
