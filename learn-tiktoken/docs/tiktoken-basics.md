@@ -248,7 +248,151 @@ Mental model:
 Just remember: **Tokens are the model/hardware unit; chunks are usually the transport or app unit.**
 
 
+---
+
+## Important terms 
+
+### Token
+
+Atomic unit of text for the model. Billing and limits are almost always in tokens, not characters. 
+
+### Chunk (ambiguous)
+See [OpenAI: chunk vs token](#openai-chunk-vs-token-shallow) and [Antropic / GPU](#anthropic-tokens-chunks-and-gpu). In OpenAI SDKs, `chunk` usually means an SSE stream packet (`delta.content`), **not** one token. 
+
+### Encoding / vocabulary 
+Named toknizer ruleset (`cl100k_base`, `o200k_base`, ...). Same text -> different token counts under different encodings. 
 
 
+### Input / prompt tokens 
+See [Input tokens vs output tokens](#input-tokens-vs-output-tokens). Tokens in what you send. 
 
 
+### Output / completion tokens 
+See [Input tokens vs output tokens](#input-tokens-vs-output-tokens). Tokens the model generates (for the `max_tokens` ceiling before it finishes). 
+
+
+### KV cache 
+GPU-side storage of attention keys/values for tokens already processed. Grows with context length; a major reason long prompts burn memory. 
+
+### VRAM / HBM 
+GPU on-device memory holding weights + KV cache + activations. Limits how large a model and how long a context you can run. 
+
+### `max_tokens`
+API parameter: maximum **output** length. Not an input limit. Gateways often reserve `estimated_prompt + max_tokens` as a worest-case budget. 
+
+### `usage`
+Upstream reponse field with real `prompt_tokens` / `completion_tokens` (or `input_tokens` / `output_tokens`). Used to **settle** after the call. 
+
+
+### TPM - Tokens Per Minute 
+
+A **rate limit**: how many tokens you may consume in a one-minute window. 
+
+
+- Soft meaning at providers: "you may use at most X tokens/minute."
+- In this project: a fixed **60s buekct** per `limitKey` (see `src/limit/tpm.ts`). 
+- If reserve fails -> HTTP **429** (too many requests / capacity).
+
+Demo limit here is `2000` TPM - small on purpose so you can hit 429 easily. 
+
+
+Related cusins you will see in docs: 
+
+| Term | Meaning |
+|------|---------|
+| **RPM** | Requests Per Minute |
+| **TPD** | Tokens Per Day |
+| **RPD** | Requests Per Day |
+
+
+### Reserve / commit / release (TPM)
+Three-phase pattern so concurrent requests do not oversell the bucket: 
+
+- **reserve** - temporarily take `estimated_prompt + max_tokens` from the bucket. 
+- **commit** - after success, adjust to **actual** tokens (`actual - reserved`)
+- **release** - on failure, give the reserved tokens back 
+
+
+Same idea as money hold/capture/refund, but a separate axis. 
+
+### Money preConsume / postConsume / refund 
+Billing twin of TPM: 
+
+- **preConsume** - hold estimated cost 
+- **postConsume** - charge real cost from `usage` 
+- **refund** - undo the hold on failure 
+
+If the wallet is short -> HTTP **402** (payment required), not 429. 
+
+### Orthogonal axes (402 vs 429) 
+
+Money and TPM are **independent** checks. A user can be rich but rate-limited (429), or 
+under quota but broke (402). Do not merge them into one "quota" number. 
+
+```
+estimated_prompt + max_tokens
+         │
+    ┌────┴────┐
+    ▼         ▼
+ reserve   preConsume
+  TPM $      $
+ (429)      (402)
+    │         │
+    └────┬────┘
+         ▼
+   call upstream
+         │
+   success → commit TPM + postConsume $
+   failure → release TPM + refund $
+```
+
+### Settlement 
+After upstream returns real `usage`, correct the earlier estimate (adjust TPM used, adjust charged money). Estimates are for **admission**; settlement is for **truth**. 
+
+### Context window 
+Maximum tokens the model can attend to in one request (input + output, depending on the product). Separate from TPM (throughput over time).
+
+### BPE 
+Byte Pair Encoding - the merge algorithm behind 
+
+
+### js-tiktoken / lite + ranks 
+JS port of tiktoken. `lite` loads only the rank tables you import (`cl100k_base`, `o200k_base`), which keeps bundles small and Workers-friendly. 
+
+---
+
+## How this mini project fits together 
+
+| Concern | File | Role |
+|---------|------|------|
+| Encode / estimate | `src/billing/tokenizer.ts` | Local token counts before upstream |
+| Money hold | `src/billing/calculator.ts` | preConsume / postConsume / refund |
+| TPM hold | `src/limit/tpm.ts` | reserve / commit / release |
+| Wire both axes | `src/index.ts` | 402 vs 429, rollback if money fails after TPM |
+
+**Rule of thub:** tiktoken answers "how many tokens might this request use?" TPM and billing answer "are we allowed to spend that right now?" 
+Settlement answers "what did we actually use?"
+
+
+---
+
+## Quick mental model 
+
+```
+text ──tiktoken──► token IDs ──count──► estimate
+                                            │
+                         ┌──────────────────┼──────────────────┐
+                         ▼                  ▼                  ▼
+                    context fit?         TPM OK?            $ OK?
+                    (model limit)        (429)              (402)
+                         │                  │                  │
+                         └──────────────────┴──────────────────┘
+                                            ▼
+                                      call LLM
+                                            ▼
+                                   usage (truth)
+                                            ▼
+                                      settle
+```
+
+Run `npm run demo` or the curl examples in the [README](../README.md) to see estimate -> reserve -> settle in action. 
