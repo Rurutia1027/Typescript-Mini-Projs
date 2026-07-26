@@ -8,7 +8,7 @@
  * - settle with actual usage (or refund on failure)
 */
 
-import { estimatePromptTokens } from "./tokenizer.js";
+import { estimatePromptTokens, type Msg } from "./tokenizer.js";
 
 export class InsufficientBalanceError extends Error {
     constructor(message: string) {
@@ -75,7 +75,7 @@ export function preConsume(opts: {
     const wallet = wallets.get(opts.userId); 
     // not wallet record can be found from memory kv store 
     if (!wallet) {
-        throw new InsufficientBalanceError('unknow user'); 
+        throw new UserCannotFoundInWallet('unknown user'); 
     }
 
     // Optimistic debit (book use UPDATE ... WHERE balance >= ? RETURNING)
@@ -114,7 +114,7 @@ export function postConsume(
     const delta = res.reservedMicro - actualMicro; 
 
     if (!wallet) {
-        throw new UserCannotFoundInWallet('unknow user'); 
+        throw new UserCannotFoundInWallet('unknown user'); 
     }
 
     // Positive delta -> refund over-reserve; negative -> charge more. 
@@ -129,7 +129,7 @@ export function refund(reservationId: string): void {
     const wallet = wallets.get(res.userId); 
 
     if (!wallet) {
-        throw new UserCannotFoundInWallet('unknow user'); 
+        throw new UserCannotFoundInWallet('unknown user'); 
     }
 
     wallet.balance += res.reservedMicro; 

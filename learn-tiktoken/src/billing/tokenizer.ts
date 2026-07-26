@@ -56,8 +56,8 @@ export function estimatePromptTokens(messages: Msg[], model: string): number {
             }
         } 
         tokens += 2; // extra token buffers 
-        return tokens; 
     }
+    return tokens; 
 }
 
 export function estimateCompletionTokens(text: string, model: string): number {

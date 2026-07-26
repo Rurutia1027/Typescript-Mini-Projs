@@ -31,7 +31,7 @@ function currentBucket(limitKey: string): Bucket {
     return b; 
 }
 
-export function reserveTpm(limitKey: string, tokens: number): TmpHandle | null {
+export function reserveTpm(limitKey: string, tokens: number): TpmHandle | null {
     const b = currentBucket(limitKey); 
     
     if (b.used + tokens > LIMIT) {
