@@ -6,12 +6,14 @@ on:
       - 'learn-hono-zod/**'
       - 'learn-tiktoken/**'
       - 'learn-sse-websocket/**'
+      - 'learn-mini-gateway/**'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
       - 'learn-hono-zod/**'
       - 'learn-tiktoken/**'
       - 'learn-sse-websocket/**'
+      - 'learn-mini-gateway/**'
       - '.github/workflows/ci.yml'
 
 concurrency:
