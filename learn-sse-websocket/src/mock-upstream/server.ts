@@ -18,10 +18,11 @@ app.post('/v1/chat/completions', async (c) => {
 
     // try to extract echo field's value from recv json body
     // if no echo field detected, then assign default string to text 
-    const text = 
-        typeof (body as {echo?: string}) === 'string' 
-        ? (body as {echo: string}).echo 
-        : 'Hello from mock upstream streaming tokens slowly.'; 
+    const echo = (body as { echo?: unknown }).echo;
+    const text =
+        typeof echo === 'string'
+            ? echo
+            : 'Hello from mock upstream streaming tokens slowly.';
     
     // no stream required, directly response normal http response 
     if (!stream) {
@@ -95,7 +96,7 @@ app.post('/v1/chat/completions', async (c) => {
             'Cache-Control': 'no-cache', 
             // here we set the connection to keep-alive
             // this is the standard way to keep the connection open for the streaming process
-            // connection will be terminated when client side receives [DONE] signal, 
+            // connection will be terminated when client side receives [DONE] signal 
             Connection: 'keep-alive', 
         }, 
     });             
