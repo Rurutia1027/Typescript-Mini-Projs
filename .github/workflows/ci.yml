@@ -5,11 +5,13 @@ on:
     paths:
       - 'learn-hono-zod/**'
       - 'learn-tiktoken/**'
+      - 'learn-sse-websocket/**'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
       - 'learn-hono-zod/**'
       - 'learn-tiktoken/**'
+      - 'learn-sse-websocket/**'
       - '.github/workflows/ci.yml'
 
 concurrency:
