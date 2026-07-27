@@ -73,9 +73,99 @@ export async function proxySSE(opts: {
 
      const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
+            const enc = new TextEncoder(); 
+            let buf = '';
+            let done = false; 
 
+            const hb = setInterval(() => {
+                try {
+                    controller.enqueue(enc.encode(SSE_HEARTBEAT)); 
+                } catch {
+                    // closed 
+                }
+            }, opts.heartbeatMs ?? 5000); 
+
+            const finish = async (failed: boolean) => {
+                if (done) return; 
+                done = true; 
+                clearInterval(hb); 
+                if (!upstreamUsage) {
+                    // Local fallback when upstream omitted usage (book uses tiktoken; here ~4 chars/token).
+                    // Keep 0 when nothing was generated so finalize can refund cleanly.
+                    completionTokens = Math.ceil(completionText.length / 4);
+                }
+
+                await opts.onFinalize({
+                    promptTokens,
+                    completionTokens,
+                    abortedByClient: clientAborted,
+                    upstreamFailed: failed, 
+                }); 
+            }; 
+
+            try {
+                while (true) {
+                    const {value, done: rd} = await reader.read(); 
+                    if (rd) break; 
+                    buf += decoder.decode(value, {stream: true}); 
+                    let idx; 
+
+                    while ((idx = buf.indexOf('\n\n')) !== -1) {
+                        const block = buf.slice(0, idx); 
+                        buf = buf.slice(idx + 2); 
+                        for (const line of block.split('\n')) {
+                            if (line.startsWith(':') || !line.startsWith('data:')) {
+                                // no data as suffix , skip 
+                                continue; 
+                            }
+                            // when we got here, it means current line is kind of: "data:xxxxxx"
+                            // data content need skip 5 characters 'data:' to retrieve 
+                            const data = line.slice(5).trim();  
+                            if (data === '[DONE]') {
+                                // this is the terminiation signal semantic 
+                                if (!clientAborted) {
+                                    controller.enqueue(enc.encode(SSE_DONE)); 
+                                }
+                                await finish(false); 
+                                controller.close(); 
+                                return; 
+                            }
+
+                            try {
+                                const json = JSON.parse(data) as {
+                                    choices?: Array<{delta?: {content?: string}}>, 
+                                    usage?: {prompt_tokens?: number; completion_tokens?: number;}; 
+                                }; 
+
+                                const piece = json.choices?.[0]?.delta?.content; 
+                                if (piece) {
+                                    completionText += piece;  
+                                }
+
+                                if (json.usage) {
+                                    upstreamUsage = true; 
+                                    promptTokens = json.usage.prompt_tokens ?? promptTokens; 
+                                    completionTokens = json.usage.completion_tokens ?? completionTokens; 
+                                }
+                            } catch {}
+                            controller.enqueue(enc.encode(`data: ${data}\n\n`)); 
+                        }
+                    }
+                }
+
+                if (!clientAborted) controller.enqueue(enc.encode(SSE_DONE)); 
+                await finish(false); 
+                controller.close(); 
+            } catch {
+                await finish(!clientAborted); 
+                try {
+                    controller.close(); 
+                } catch {
+                    /***/
+                }
+            }
         }, cancel() {
-            clientAborted: true; 
+            clientAborted = true;
             upstreamCtrl.abort(); 
             void reader.cancel(); 
         }, 

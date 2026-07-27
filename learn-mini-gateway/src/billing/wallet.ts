@@ -35,8 +35,10 @@ interface Reservation {
     status: 'reserved' | 'finalized' | 'refunded';  
 }
 
-// balance: user id -> balance amount 
-const balance = new Map<string, number>(); 
+// balance: user id -> balance amount (seed demo users; units = money after price())
+const balance = new Map<string, number>([
+    ['alice', 5_000_000],
+]);
 
 // reservations: reservation id -> reservation 
 const reservations = new Map<string, Reservation>(); 

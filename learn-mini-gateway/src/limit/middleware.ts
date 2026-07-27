@@ -2,8 +2,6 @@ import type { MiddlewareHandler } from "hono";
 
 import type { AuthVariables } from "../auth/middleware.js"; 
 import { estimatePromptTokens } from "../billing/tokenizer.js";
-import type { IRChatRequest, IRMessage } from "../types/ir.js";
-
 
 export interface LimitContext {
     estimatedPromptTokens: number; 
@@ -81,7 +79,7 @@ export function commitTpm(handles: LimitContext['tpmHandles'], actual: number) {
 
 
 export const rateLimit: MiddlewareHandler<{Variables: AppVariables}> = async (c, next) => {
-    const raw = (await c.req.json()).catch(() => null);  
+    const raw = await c.req.json().catch(() => null);
     if (!raw?.model || !Array.isArray(raw.messages)) {
         return c.json({error: {message: 'model/messages required'}}, 400); 
     } 
@@ -94,7 +92,7 @@ export const rateLimit: MiddlewareHandler<{Variables: AppVariables}> = async (c,
     const estimatedPromptTokens = estimatePromptTokens(raw.messages, raw.model); 
     const need = estimatedPromptTokens + maxTokens; 
 
-    const keys = [`key: ${auth.keyId}`, `model:${raw.model}`, 'global']; 
+    const keys = [`key:${auth.keyId}`, `model:${raw.model}`, 'global']; 
     const tpmHandles :LimitContext['tpmHandles'] = []; 
 
     for (const key of keys) {
