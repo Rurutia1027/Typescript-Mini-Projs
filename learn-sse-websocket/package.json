@@ -1,0 +1,28 @@
+{
+    "name": "learn-sse-websocket",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Mini project: SSE proxy, reverse cancel, heartbeat — plus SSE vs WebSocket guide",
+    "type": "module",
+    "scripts": {
+      "dev": "tsx watch src/index.ts",
+      "start": "tsx src/index.ts",
+      "upstream": "tsx src/mock-upstream/server.ts",
+      "typecheck": "tsc -p tsconfig.json --noEmit"
+    },
+    "dependencies": {
+      "@hono/node-server": "^1.13.7",
+      "hono": "^4.6.14",
+      "ws": "^8.18.0"
+    },
+    "devDependencies": {
+      "@types/node": "^22.10.5",
+      "@types/ws": "^8.5.13",
+      "tsx": "^4.19.2",
+      "typescript": "^5.7.3"
+    },
+    "engines": {
+      "node": ">=20"
+    }
+  }
+  
