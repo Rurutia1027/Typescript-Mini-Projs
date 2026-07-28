@@ -20,13 +20,28 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  learn-hono-zod:
-    name: learn-hono-zod
+  typecheck:
+    name: ${{ matrix.project }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - learn-hono-zod
+          - learn-tiktoken
+          - learn-sse-websocket
+          - learn-mini-gateway
+        include:
+          - project: learn-tiktoken
+            run_demo: true
     defaults:
       run:
-        working-directory: learn-hono-zod
+        working-directory: ${{ matrix.project }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,26 +49,11 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: learn-hono-zod/package-lock.json
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
 
       - run: npm ci
       - run: npm run typecheck
 
-  learn-tiktoken:
-    name: learn-tiktoken
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: learn-tiktoken
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: learn-tiktoken/package-lock.json
-
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run demo
+      - name: Run demo CLI
+        if: matrix.run_demo
+        run: npm run demo
