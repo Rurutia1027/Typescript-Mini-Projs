@@ -1,6 +1,6 @@
 # LMM gateway learning labs | [![CI](https://github.com/Rurutia1027/Typescript-Mini-Projs/actions/workflows/ci.yml/badge.svg)](https://github.com/Rurutia1027/Typescript-Mini-Projs/actions/workflows/ci.yml)
 
-Four small sibling projects next to `book-llm-gateway`. They isolate the libraries and runtime patterns that matter most in that book, with **English docs** and runnable demos. 
+Four small sibling projects next to [`book-llm-gateway`](https://github.com/diguike/book-llm-gateway). They isolate the libraries and runtime patterns that matter most in that book, with **English docs** and runnable demos. 
 
 | Directory | Focus | Default port |
 |-----------|--------|--------------|
