@@ -17,6 +17,8 @@ interface Bucket {
 }
 
 const LIMIT = 2_000; 
+// key: TpmHandle#limitKey
+// value: Bucket 
 const buckets = new Map<string, Bucket>(); 
 
 function currentBucket(limitKey: string): Bucket {

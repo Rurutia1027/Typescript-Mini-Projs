@@ -7,11 +7,19 @@ import { Hono } from 'hono';
 import { z } from 'zod'; 
 import { requireAdminToken } from '../auth/middleware.js'; 
 
+// Hono(root)  resut /hello  -> Hono(root)
+// request /admin -> Hono(root) -> dispatch ->  
+
+
+// /payment/refunc -> 
 export function createAdminRouter(adminToken: string) {
+    // sub-branch mount on the main path 
     const app = new Hono(); 
 
+    // chain of filter request hono (c context of honor)
     app.use('*', requireAdminToken(adminToken)); 
 
+    // /admin/health 
     app.get('/health', (c) => c.json({ok: true, service: 'learn-hono-zod-admin'})); 
 
     const CreateKeySchema = z.object({
@@ -19,6 +27,7 @@ export function createAdminRouter(adminToken: string) {
         scopes: z.array(z.string()).default(['chat']), 
     }); 
 
+    // /admin/keys 
     app.post('/keys', async (c) => {
         const raw = await c.req.json().catch(() => null); 
         const parsed = CreateKeySchema.safeParse(raw); 

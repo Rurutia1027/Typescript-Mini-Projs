@@ -20,6 +20,8 @@ export interface LimitContext {
 }
 
 export type LimitVariables = AuthVariables & { limit: LimitContext }; 
+// chain of responsibility -> similar as the Chain Filter in Spring Web Servelet Filters 
+// doFilter()
 export const rateLimit: MiddlewareHandler<{ Variables: LimitVariables }> = async (c, next) => {
     // Body is consumed here. Downstream handlers must re-read via c.req.json() 
     // (Hono caches the parsed JSON) or use c.get('limit')
@@ -34,11 +36,15 @@ export const rateLimit: MiddlewareHandler<{ Variables: LimitVariables }> = async
     }
 
     const promptText = body.messages
-    .map((m) => (typeof m.content === 'string' ? m.content : JSON.stringify(m.content)))
-    .join('\n');
+        .map((m) => (typeof m.content === 'string' ? m.content : JSON.stringify(m.content)))
+        // m: IRMessageSchema ; m#content json -> strings  + '\n' + string2 + '\n' + string3 + ...  
+        .join('\n');
 
     const estimatedPromptChars = promptText.length; 
     const maxTokens = body.max_tokens ?? 256; 
+    // token of TPM -> total token = input token + output token 
+    // input token = promt token , prompt message , infer via tiktoken (open source repo provide openai communcity)
+    // output token = completion token, tiktoken to estimate output /complete token total counts  
 
     // Toy limit: reject huge prompts (stands in for TPM check).
     if (estimatedPromptChars + maxTokens > 20_000) {

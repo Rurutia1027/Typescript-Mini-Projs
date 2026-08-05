@@ -5,14 +5,14 @@ on:
     paths:
       - 'learn-hono-zod/**'
       - 'learn-tiktoken/**'
-      - 'learn-sse-websocket/**'
+      - 'learn-sse/**'
       - 'learn-mini-gateway/**'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
       - 'learn-hono-zod/**'
       - 'learn-tiktoken/**'
-      - 'learn-sse-websocket/**'
+      - 'learn-sse/**'
       - 'learn-mini-gateway/**'
       - '.github/workflows/ci.yml'
 
@@ -34,11 +34,13 @@ jobs:
         project:
           - learn-hono-zod
           - learn-tiktoken
-          - learn-sse-websocket
+          - learn-sse
           - learn-mini-gateway
         include:
           - project: learn-tiktoken
             run_demo: true
+          - project: learn-sse
+            run_ci: true
     defaults:
       run:
         working-directory: ${{ matrix.project }}
@@ -52,7 +54,13 @@ jobs:
           cache-dependency-path: ${{ matrix.project }}/package-lock.json
 
       - run: npm ci
-      - run: npm run typecheck
+      - name: Run typecheck
+        if: matrix.run_ci != true
+        run: npm run typecheck
+
+      - name: Run project CI
+        if: matrix.run_ci == true
+        run: npm run ci
 
       - name: Run demo CLI
         if: matrix.run_demo
