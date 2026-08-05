@@ -6,14 +6,14 @@ Four small sibling projects next to [`book-llm-gateway`](https://github.com/digu
 |-----------|--------|--------------|
 | [`learn-hono-zod`](./learn-hono-zod) | Hono middleware Variables, body cache, admin sub-app, Zod IR + env | `3101` |
 | [`learn-tiktoken`](./learn-tiktoken) | `js-tiktoken`, money preConsume, TPM reserve/commit/release | `3102` |
-| [`learn-sse-websocket`](./learn-sse-websocket) | SSE proxy, reverse cancel, heartbeats, **SSE vs WebSocket deep dive** | `3103` (+ upstream `3199`) |
+| [`learn-sse`](./learn-sse) | SSE proxy, reverse cancel, heartbeats, **SSE vs WebSocket deep dive** | `3103` (+ upstream `3199`) |
 | [`learn-mini-gateway`](./learn-mini-gateway) | Vertical slice combining all of the above | `3104` (+ upstream `3198`) |
 
 
 ## Study for 
 
 ```
-learn-hono-zod  →  learn-tiktoken  →  learn-sse-websocket  →  learn-mini-gateway
+learn-hono-zod  →  learn-tiktoken  →  learn-sse  →  learn-mini-gateway
                                                               ↓
                                                     book-llm-gateway Ch3 / Ch7
 ```
