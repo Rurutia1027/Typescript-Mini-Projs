@@ -12,7 +12,7 @@ const intFromString = z
     .pipe(z.number().int().positive().optional())
 
 const EnvSchema = z.object({
-    PORT: intFromString,
+    PORT: intFromString,  
     ADMIN_TOKEN: z.string().min(8).default("dev-admin-token-change-me"), 
     // Demo keys: plaintest list for learning (book uses hashed keys in SQLite). 
     GATEWAY_KEYS: z
@@ -28,14 +28,19 @@ const EnvSchema = z.object({
 
 export type AppEnv = z.infer<typeof EnvSchema>
 
+// ADMIN_TOKNE=xx 
+// .env disk -> memory {...}: object 
+// parsed {success: boolean, data: AppEnv | undefined} 
 export function loadEnv(): AppEnv {
     const parsed = EnvSchema.safeParse(process.env); 
     if (!parsed.success) {
         console.error('Invalid environment: ', parsed.error.format()); 
         process.exit(1)
     }
-    return {
+    
+    return  {
         ...parsed.data,
-        PORT: parsed.data.PORT ?? 3101,
+        PORT: parsed.data?.PORT ?? 3101,
+        ADMIN_TOKEN: parsed.data?.ADMIN_TOKEN ?? 'dev-admin-token-change-me',
     }
 }

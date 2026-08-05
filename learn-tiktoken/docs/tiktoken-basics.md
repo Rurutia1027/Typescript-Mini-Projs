@@ -29,8 +29,7 @@ Tokens are the unit of:
 
 ## What is tiktoken?
 
-**tiktoken** is OpenAI's fast BPE (Byte Pair Encoding) tokenizer library. It turns a string into a list of token IDs (and back), 
-using the same encoding the OpenAI models use. 
+**tiktoken** is OpenAI's fast BPE (Byte Pair Encoding) tokenizer library. It turns a string into a list of token IDs (and back), using the same encoding the OpenAI models use. 
 
 In this repo we use **js-tiktoken** (the JavaScript port), specifically `js-tiktoken/lite` plus rank files - so it runs in Node/Workers without native bindings. 
 

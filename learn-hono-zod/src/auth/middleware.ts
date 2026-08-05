@@ -7,11 +7,13 @@
 import type { MiddlewareHandler } from "hono";
 
 export interface AuthContext {
-    keyId: string; 
+    keyId: string; // key id = bearer token 
     userId: string; 
     scopes: string[]; 
 }
 
+// c.set('auth', AuthContext) -> save kv pair to the hono store/cache 
+// c.get('limit') -> LimitContext 
 export type AuthVariables = {auth: AuthContext}; 
 
 /** In-memory key table for the mini project (book uses Drizzle + SQLite).  */
@@ -20,12 +22,15 @@ const KEY_DB: Record<string, AuthContext> = {
     'sk-gw-bob': {keyId: 'key-2', userId: 'user-2', scopes: ['chat', 'admin']}, 
 }; 
 
-export function extractBearerToken(header: string | undefined): string | null {
+function extractBearerToken(header: string | undefined): string | null {
     if (!header) return null; 
     const m = /^Bearer\s+(.+)$/i.exec(header.trim());
     return m?.[1]?.trim() || null;
 }
-
+// req Http Request / HttpServleRequest => header + body 
+// header -> kv store, 
+// {'Authorization': "Bearer sk-gw-xxxx"} --> normal users 
+// {'X-Admin-Token': 'trandom stirngxxx '}
 export const requireGatewayKey: MiddlewareHandler<{
     Variables: AuthVariables;
 }> = async (c, next) => {
@@ -36,6 +41,7 @@ export const requireGatewayKey: MiddlewareHandler<{
         ); 
     } 
 
+    // not token, sk-gw-sam 
     if (!plaintext.startsWith('sk-gw-')) {
         return c.json(
             { error: { message: 'key format invalid; expected prefix sk-gw-' } },
@@ -47,8 +53,10 @@ export const requireGatewayKey: MiddlewareHandler<{
     if (!row) {
         return c.json({error: {message: 'invalid key'}}, 401); 
     }
-
-    c.set('auth', row); 
+    // {keyId: 'key-1', userId: 'user-1', scopes: ['chat']} : any 
+    // -> AuthContext 
+    c.set('auth', row);  /// c.set -> save kv pair to the hono store/cache 
+    // hono cache internal value is always available during the Hono instance lifetime  
     return await next(); 
 }; 
 
