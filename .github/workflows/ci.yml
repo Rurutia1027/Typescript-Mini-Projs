@@ -5,14 +5,14 @@ on:
     paths:
       - 'learn-hono-zod/**'
       - 'learn-tiktoken/**'
-      - 'learn-sse-websocket/**'
+      - 'learn-sse/**'
       - 'learn-mini-gateway/**'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
       - 'learn-hono-zod/**'
       - 'learn-tiktoken/**'
-      - 'learn-sse-websocket/**'
+      - 'learn-sse/**'
       - 'learn-mini-gateway/**'
       - '.github/workflows/ci.yml'
 
@@ -34,12 +34,12 @@ jobs:
         project:
           - learn-hono-zod
           - learn-tiktoken
-          - learn-sse-websocket
+          - learn-sse
           - learn-mini-gateway
         include:
           - project: learn-tiktoken
             run_demo: true
-          - project: learn-sse-websocket
+          - project: learn-sse
             run_ci: true
     defaults:
       run:
