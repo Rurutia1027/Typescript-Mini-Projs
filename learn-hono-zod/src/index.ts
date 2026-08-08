@@ -19,17 +19,47 @@ const env = loadEnv();
 
 type AppVariables = LimitVariables; 
 
+// Hono(root)
+// request /admin => server  -> /admin/health => server -> 
 const app = new Hono<{Variables: AppVariables }>(); 
 
+// /heathh -> server 
 app.get('/health', (c) => c.json({ok: true})); 
 
-
 // mount filter  check request header contains admin token by checking 
+// admin token loaded from Vault or AWS Secure Manger,  k8s configmap 
+
+// sub-hono instance 
+// -> /admin/*
+// tree struct 
+// root node 
+// -> path -> /admin -> sub-node -> /health ; /keys 
+// invoke function of sub-node -> /admin/health -> server -> 
+
+// mount operation mount a new tree node (maybe with multiple sub-branches)
 app.route('/admin', createAdminRouter(env.ADMIN_TOKEN)); 
 
 
+//  client -> post requst of http 
+// - path (/v1/chat/completions) 
+// - request body 
+// - request header 
+
+// request -> (filters 
+// - filter authentcation token is valid , db scan , user id, key id scan data load user metadata -> context c.set('auth', AuthContext)
+// -  filter filter of rate limit request (messages -> line of string -> how tokens of prompt and complet tokens number
+// total token number compare userId-> bucket<sliding window> (total tokens: TPM) )
+// request promotp complet -> 100 tokens, userId -> account -> 1000 tokens 
+// bucket userId  rate limiter every minute user 90 tokens / per minute -> TPM 
+// authentication filter -> success -> rate limiter estimate tokens -> resource 
+
+// update TPM values holded in side of the LimitContext  
+
+// encpoint -> post 
 app.post('/v1/chat/completions', requireGatewayKey, rateLimit, async (c) => {
-    const auth = c.get('auth'); 
+    // here context -> AuthContext 
+    // conxt limit -> LimitContext 
+    const auth = c.get('auth');  
     const limit = c.get('limit'); 
 
     // second body read - hits Hono's JSON cache (same pattern as the book)

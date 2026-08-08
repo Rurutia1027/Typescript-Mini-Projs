@@ -1,12 +1,12 @@
 # learn-sse-websocket
 
 Hands-on SSE proxy matching `book-llm-gateway` Ch7, plus a **detailed SSE vs
-WebSocket** guide and a tiny WS echo for contrast.
+WebSocket** guide.
 
 ## Quick start
 
 ```bash
-cd /Users/emma/LLM/learn-sse-websocket
+cd /Users/emma/LLM/Typescript-Mini-Projs/learn-sse-websocket
 npm install
 
 # Terminal A — fake OpenAI-style SSE upstream
@@ -48,11 +48,46 @@ curl -N http://localhost:3103/v1/chat/completions \
 Then check `/finalizes` — `abortedByClient` should be `true`. The proxy's
 `ReadableStream.cancel` aborted the upstream `fetch` via `AbortController`.
 
-### WebSocket echo (contrast)
+## Integration test scenarios
+
+### Run all scenarios automatically
 
 ```bash
-npx wscat -c ws://localhost:3103/ws-echo
-# type any text; server echoes JSON
+npm run test:integration
+```
+
+This starts both servers on test ports and validates:
+
+1. Happy path SSE stream ends with `data: [DONE]`
+2. Unhappy path: invalid JSON returns `400`
+3. Unhappy path: client abort marks `abortedByClient: true`
+
+### Scenario 1: happy path (manual)
+
+```bash
+curl -N http://localhost:3103/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"echo":"Streaming one word at a time","delay_ms":120}'
+```
+
+### Scenario 2: unhappy path - invalid JSON (manual)
+
+```bash
+curl -i http://localhost:3103/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d 'not-json'
+```
+
+### Scenario 3: unhappy path - client abort (manual)
+
+```bash
+# Start and let it stream, then Ctrl+C within ~1-2 seconds
+curl -N http://localhost:3103/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"echo":"one two three four five six seven eight nine ten","delay_ms":350}'
+
+# Check finalize log for abortedByClient=true
+curl -s http://localhost:3103/finalizes | jq
 ```
 
 ---
