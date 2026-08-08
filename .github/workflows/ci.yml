@@ -39,6 +39,8 @@ jobs:
         include:
           - project: learn-tiktoken
             run_demo: true
+          - project: learn-mini-gateway
+            run_ci: true
           - project: learn-sse
             run_ci: true
     defaults:
@@ -54,6 +56,7 @@ jobs:
           cache-dependency-path: ${{ matrix.project }}/package-lock.json
 
       - run: npm ci
+      - run: npm run typecheck
       - name: Run typecheck
         if: matrix.run_ci != true
         run: npm run typecheck
