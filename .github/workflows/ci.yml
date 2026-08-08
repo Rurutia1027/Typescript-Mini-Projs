@@ -39,6 +39,13 @@ jobs:
         include:
           - project: learn-tiktoken
             run_demo: true
+<<<<<<< Updated upstream
+=======
+          - project: learn-sse-websocket
+            run_ci: true
+          - project: learn-mini-gateway
+            run_ci: true
+>>>>>>> Stashed changes
     defaults:
       run:
         working-directory: ${{ matrix.project }}
@@ -52,7 +59,18 @@ jobs:
           cache-dependency-path: ${{ matrix.project }}/package-lock.json
 
       - run: npm ci
+<<<<<<< Updated upstream
       - run: npm run typecheck
+=======
+
+      - name: Run typecheck
+        if: matrix.run_ci != true
+        run: npm run typecheck
+
+      - name: Run project CI
+        if: matrix.run_ci == true
+        run: npm run ci
+>>>>>>> Stashed changes
 
       - name: Run demo CLI
         if: matrix.run_demo
